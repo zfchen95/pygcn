@@ -12,7 +12,7 @@ def encode_onehot(labels):
     return labels_onehot
 
 
-def load_data(path="../data/cora/", dataset="cora"):
+def load_data(path="data/cora/", dataset="cora"):
     """Load citation network dataset (cora only for now)"""
     print('Loading {} dataset...'.format(dataset))
 
@@ -38,9 +38,9 @@ def load_data(path="../data/cora/", dataset="cora"):
     features = normalize(features)
     adj = normalize(adj + sp.eye(adj.shape[0]))
 
-    idx_train = range(140)
-    idx_val = range(200, 500)
-    idx_test = range(500, 1500)
+    idx_train = range(1600)
+    idx_val = range(1600, 2000)
+    idx_test = range(2000, 2500)
 
     features = torch.FloatTensor(np.array(features.todense()))
     labels = torch.LongTensor(np.where(labels)[1])
@@ -49,6 +49,9 @@ def load_data(path="../data/cora/", dataset="cora"):
     idx_train = torch.LongTensor(idx_train)
     idx_val = torch.LongTensor(idx_val)
     idx_test = torch.LongTensor(idx_test)
+
+    print("train: ", len(idx_train), "val: ", len(idx_val), "test: ", len(idx_test))
+    print("adj: ", adj.shape, "features", features.shape, "labels", labels.shape)
 
     return adj, features, labels, idx_train, idx_val, idx_test
 

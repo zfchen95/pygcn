@@ -41,7 +41,8 @@ if args.cuda:
 
 # Load data
 adj, features, labels, idx_train, idx_val, idx_test = load_data()
-
+# print("train: ", len(idx_train), "val: ", len(idx_val), "test: ", len(idx_test))
+# print("adj: ", adj, "features", features, "labels", labels) 
 # Model and optimizer
 model = GCN(nfeat=features.shape[1],
             nhid=args.hidden,

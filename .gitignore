@@ -1,2 +1,7 @@
 
 *.pyc
+build/
+data/karate.mtx
+dist/
+pygcn.egg-info/
+
