@@ -12,7 +12,7 @@ def encode_onehot(labels):
     return labels_onehot
 
 
-def load_data(path="data/cora/", dataset="cora"):
+def load_data(path="data/ftp/", dataset="ftp"):
     """Load citation network dataset (cora only for now)"""
     print('Loading {} dataset...'.format(dataset))
 
@@ -24,7 +24,7 @@ def load_data(path="data/cora/", dataset="cora"):
     # build graph
     idx = np.array(idx_features_labels[:, 0], dtype=np.int32)
     idx_map = {j: i for i, j in enumerate(idx)}
-    edges_unordered = np.genfromtxt("{}{}.cites".format(path, dataset),
+    edges_unordered = np.genfromtxt("{}{}.edgelist".format(path, dataset),
                                     dtype=np.int32)
     edges = np.array(list(map(idx_map.get, edges_unordered.flatten())),
                      dtype=np.int32).reshape(edges_unordered.shape)
@@ -38,9 +38,10 @@ def load_data(path="data/cora/", dataset="cora"):
     features = normalize(features)
     adj = normalize(adj + sp.eye(adj.shape[0]))
 
-    idx_train = range(1600)
-    idx_val = range(1600, 2000)
-    idx_test = range(2000, 2500)
+    idx_len = len(idx)
+    idx_train = range(int(idx_len * 0.6))
+    idx_val = range(int(idx_len * 0.6), int(idx_len * 0.9))
+    idx_test = range(int(idx_len * 0.9), idx_len)
 
     features = torch.FloatTensor(np.array(features.todense()))
     labels = torch.LongTensor(np.where(labels)[1])
