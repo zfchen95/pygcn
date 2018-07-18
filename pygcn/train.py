@@ -13,6 +13,8 @@ from torch.autograd import Variable
 from pygcn.utils import load_data, accuracy
 from pygcn.models import GCN
 
+import warnings
+warnings.filterwarnings("ignore", message="numpy.dtype size change")
 # Training settings
 parser = argparse.ArgumentParser()
 parser.add_argument('--no-cuda', action='store_true', default=False,
@@ -30,10 +32,12 @@ parser.add_argument('--hidden', type=int, default=16,
                     help='Number of hidden units.')
 parser.add_argument('--dropout', type=float, default=0.5,
                     help='Dropout rate (1 - keep probability).')
-parser.add_argument('--train', type=str, default='ip',
+parser.add_argument('--train', type=str, default='2018-06-17_01',
                     help='Training dataset.')
-parser.add_argument('--test', type=str, default='ip',
+parser.add_argument('--test', type=str, default='2018-06-17_00',
                     help='Test dataset, used for prediction.')
+parser.add_argument('--path', type=str, default='data/network/',
+                    help='Path where data is stored.')
 
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -45,9 +49,11 @@ if args.cuda:
 
 train_dataset = args.train
 test_dataset = args.test
+path = args.path
 
 # Load data
-adj, features, labels, idx_train, idx_val, idx_test = load_data(dataset=train_dataset)
+adj, features, labels, idx_train, idx_val, idx_test = load_data(path, train_dataset)
+print('number of nodes in training set: ', len(labels))
 # Model and optimizer
 model = GCN(nfeat=features.shape[1],
             nhid=args.hidden,
@@ -74,6 +80,7 @@ def train(epoch):
     optimizer.zero_grad()
     output = model(features, adj)
     loss_train = F.nll_loss(output[idx_train], labels[idx_train])
+    # loss_train = F.cross_entropy(output[idx_train], labels[idx_train])
     acc_train = accuracy(output[idx_train], labels[idx_train])
     loss_train.backward()
     optimizer.step()
@@ -105,19 +112,18 @@ def test():
 
 def predict():
     model.eval()
-    adj, features, _, _, _, _ = load_data(dataset=test_dataset)
+    adj, features, _, _, _, _ = load_data(path, test_dataset)
+    print('number of nodes in test set: ', len(features))
     if args.cuda:
         features = features.cuda()
         adj = adj.cuda()
     features = Variable(features)
-    outputs = model(features, adj)
-    predicted = outputs.data
-    # _, predicted = torch.max(outputs.data, 0)
-    predictions = (list(predicted.cpu().numpy()))
-    with open("%s_prediction.txt" % test_dataset, 'wb') as f:
-        for index, label in enumerate(labels.data.cpu().numpy()):
+    output = model(features, adj)
+    predictions = output.max(1)[1].type_as(labels)
+    with open("predictions/%s.txt" % test_dataset, 'wb') as f:
+        f.write('node_id predict_label\n')
+        for index, label in enumerate(predictions):
             f.write('%d %d\n' % (index, label))
-            # print(index, label)
     print("Prediction completed!")
 
 # Train model
@@ -131,4 +137,4 @@ print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
 test()
 
 # Prediction
-# predict()
+predict()

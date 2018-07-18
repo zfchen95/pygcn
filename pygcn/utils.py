@@ -12,16 +12,16 @@ def encode_onehot(labels):
     return labels_onehot
 
 
-def load_data(path="data/network/", dataset="ip"):
+def load_data(path, dataset):
     """Load citation network dataset (cora only for now)"""
     print('Loading {} dataset...'.format(dataset))
 
-    idx_features_labels = np.genfromtxt("{}{}.content".format(path, dataset),
-                                        dtype=np.dtype(str))
-    features = sp.csr_matrix(idx_features_labels[:, 1:-1], dtype=np.float32)
-    labels = encode_onehot(idx_features_labels[:, -1])
+    idx_labels_features = np.genfromtxt("{}{}.content".format(path, dataset),
+                                        skip_header=1, dtype=np.dtype(int))
+    features = sp.csr_matrix(idx_labels_features[:, 2:], dtype=np.float32)
+    labels = encode_onehot(idx_labels_features[:, 1])
     # build graph
-    idx = np.array(idx_features_labels[:, 0], dtype=np.int32)
+    idx = np.array(idx_labels_features[:, 0], dtype=np.int32)
     idx_map = {j: i for i, j in enumerate(idx)}
     edges_unordered = np.genfromtxt("{}{}.edgelist".format(path, dataset),
                                     dtype=np.int32)
@@ -38,9 +38,11 @@ def load_data(path="data/network/", dataset="ip"):
     adj = normalize(adj + sp.eye(adj.shape[0]))
 
     idx_len = len(idx)
-    idx_train = range(int(idx_len * 0.6))
-    idx_val = range(int(idx_len * 0.6), int(idx_len * 0.9))
-    idx_test = range(int(idx_len * 0.9), idx_len)
+    # idx_train = range(int(idx_len * 0.6))
+    # idx_val = range(int(idx_len * 0.6), int(idx_len * 0.9))
+    # idx_test = range(int(idx_len * 0.9), idx_len)
+    np.random.shuffle(idx)
+    idx_train, idx_val, idx_test = idx[:int(idx_len*0.6)], idx[int(idx_len*0.6):int(idx_len*0.9)], idx[int(idx_len*0.9):]
 
     features = torch.FloatTensor(np.array(features.todense()))
     labels = torch.LongTensor(np.where(labels)[1])
