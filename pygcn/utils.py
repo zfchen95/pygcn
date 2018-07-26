@@ -18,8 +18,8 @@ def load_data(path, dataset):
 
     idx_labels_features = np.genfromtxt("{}{}.content".format(path, dataset),
                                         skip_header=1, dtype=np.dtype(int))
-    features = sp.csr_matrix(idx_labels_features[:, 2:], dtype=np.float32)
-    labels = encode_onehot(idx_labels_features[:, 1])
+    features = sp.csr_matrix(idx_labels_features[:, 1:-1], dtype=np.float32)
+    labels = encode_onehot(idx_labels_features[:, -1])
     # build graph
     idx = np.array(idx_labels_features[:, 0], dtype=np.int32)
     idx_map = {j: i for i, j in enumerate(idx)}
@@ -42,7 +42,7 @@ def load_data(path, dataset):
     # idx_val = range(int(idx_len * 0.6), int(idx_len * 0.9))
     # idx_test = range(int(idx_len * 0.9), idx_len)
     np.random.shuffle(idx)
-    idx_train, idx_val, idx_test = idx[:int(idx_len*0.6)], idx[int(idx_len*0.6):int(idx_len*0.9)], idx[int(idx_len*0.9):]
+    idx_train, idx_val, idx_test = idx[:int(idx_len*0.7)], idx[int(idx_len*0.7):], idx[int(idx_len*0.9):]
 
     features = torch.FloatTensor(np.array(features.todense()))
     labels = torch.LongTensor(np.where(labels)[1])
