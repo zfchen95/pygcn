@@ -38,11 +38,11 @@ def load_data(path, dataset):
     adj = normalize(adj + sp.eye(adj.shape[0]))
 
     idx_len = len(idx)
-#     idx_train = range(int(idx_len * 0.6))
-#     idx_val = range(int(idx_len * 0.6), int(idx_len * 0.9))
-#     idx_test = range(int(idx_len * 0.9), idx_len)
-    np.random.shuffle(idx)
-    idx_train, idx_val, idx_test = idx[:int(idx_len*0.9)], idx[int(idx_len*0.9):], idx[int(idx_len*0.9):]
+    idx_train = range(int(idx_len * 0.6))
+    idx_val = range(int(idx_len * 0.6), int(idx_len * 0.9))
+    idx_test = range(int(idx_len * 0.9), idx_len)
+#     np.random.shuffle(idx)
+#     idx_train, idx_val, idx_test = idx[:int(idx_len*0.9)], idx[int(idx_len*0.9):], idx[int(idx_len*0.9):]
 
     features = torch.FloatTensor(np.array(features.todense()))
     labels = torch.LongTensor(np.where(labels)[1])

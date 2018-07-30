@@ -92,15 +92,17 @@ def train(epoch):
 
     loss_val = F.nll_loss(output[idx_val], labels[idx_val])
     acc_val = accuracy(output[idx_val], labels[idx_val])
-    precision, recall, F1, acc = evaluate(output[idx_train], labels[idx_train])
-    print('Epoch: {:04d}'.format(epoch+1),
-         'loss_train: {:.4f}'.format(loss_train.data[0]),
-         'acc_train: {:.4f}'.format(acc_train.data[0]),
-         'loss_val: {:.4f}'.format(loss_val.data[0]),
-         'acc_val: {:.4f}'.format(acc_val.data[0]),
-         'time: {:.4f}s'.format(time.time() - t),
-         'recall: {:4f}s'.format(recall),
-         'precision: {:4f}s'.format(precision))
+    
+    precision_train, recall_train, F1_train, _ = evaluate(output[idx_train], labels[idx_train])
+    precision_val, recall_val, F1_val, _ = evaluate(output[idx_val], labels[idx_val])
+    with open("predictions/evaluation_train_val.txt", "a") as f:
+        f.write('%s %f %f %f %f %f %f %f %f\n' % (train_dataset, precision_train, recall_train, acc_train, loss_train, precision_val, recall_val, acc_val, loss_val))
+#     print('Epoch: {:04d}'.format(epoch+1),
+#          'loss_train: {:.4f}'.format(loss_train.data[0]),
+#          'acc_train: {:.4f}'.format(acc_train.data[0]),
+#          'loss_val: {:.4f}'.format(loss_val.data[0]),
+#          'acc_val: {:.4f}'.format(acc_val.data[0]),
+#          'time: {:.4f}s'.format(time.time() - t))
 
 
 def test():
