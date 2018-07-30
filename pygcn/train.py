@@ -92,12 +92,15 @@ def train(epoch):
 
     loss_val = F.nll_loss(output[idx_val], labels[idx_val])
     acc_val = accuracy(output[idx_val], labels[idx_val])
-    # print('Epoch: {:04d}'.format(epoch+1),
-    #      'loss_train: {:.4f}'.format(loss_train.data[0]),
-    #      'acc_train: {:.4f}'.format(acc_train.data[0]),
-    #      'loss_val: {:.4f}'.format(loss_val.data[0]),
-    #      'acc_val: {:.4f}'.format(acc_val.data[0]),
-    #      'time: {:.4f}s'.format(time.time() - t))
+    precision, recall, F1, acc = evaluate(output[idx_train], labels[idx_train])
+    print('Epoch: {:04d}'.format(epoch+1),
+         'loss_train: {:.4f}'.format(loss_train.data[0]),
+         'acc_train: {:.4f}'.format(acc_train.data[0]),
+         'loss_val: {:.4f}'.format(loss_val.data[0]),
+         'acc_val: {:.4f}'.format(acc_val.data[0]),
+         'time: {:.4f}s'.format(time.time() - t),
+         'recall: {:4f}s'.format(recall),
+         'precision: {:4f}s'.format(precision))
 
 
 def test():
@@ -105,10 +108,12 @@ def test():
     output = model(features, adj)
     loss_test = F.nll_loss(output[idx_test], labels[idx_test])
     acc_test = accuracy(output[idx_test], labels[idx_test])
-    evaluate(output[idx_test], labels[idx_test])
     print("Test set results:",
           "loss= {:.4f}".format(loss_test.data[0]),
           "accuracy= {:.4f}".format(acc_test.data[0]))
+    precision, recall, F1, acc = evaluate(output[idx_test], labels[idx_test])
+#     with open("predictions/test_evaluation.txt", "a") as f:
+#         f.write('%s %f %f %f %f\n' % (train_dataset, precision, recall, F1, acc))
 
 def predict():
     model.eval()
@@ -142,11 +147,11 @@ def evaluate(output, labels):
 t_total = time.time()
 for epoch in range(args.epochs):
     train(epoch)
-print("Optimization Finished!")
+# print("Optimization Finished!")
 print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
 
 # Testing
-# test()
+test()
 
 # Prediction
-predict()
+# predict()
