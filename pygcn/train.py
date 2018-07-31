@@ -36,6 +36,8 @@ parser.add_argument('--test', type=str, default='testing',
                     help='Test dataset, used for prediction.')
 parser.add_argument('--path', type=str, default='../data/GCNs/',
                     help='Path where data is stored.')
+parser.add_argument('--output', type=str, default='result/evaluations.txt',
+                    help='Result filename.')
 
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -48,7 +50,7 @@ if args.cuda:
 train_dataset = args.train
 test_dataset = args.test
 path = args.path
-
+out_filename = args.output
 # Load data
 adj, features, labels, idx_train, idx_val, idx_test = load_data(path, train_dataset)
 print('number of nodes in training set: ', len(labels))
@@ -59,7 +61,9 @@ model = GCN(nfeat=features.shape[1],
             dropout=args.dropout)
 optimizer = optim.Adam(model.parameters(),
                        lr=args.lr, weight_decay=args.weight_decay)
-
+# with open(out_filename, "a") as f:
+#     f.write('n_feature %d, epochs %d, hidden layer %d, dropout %f, lr %f\n' % (features.shape[1], args.epochs, args.hidden, args.dropout, args.lr))
+    
 if args.cuda:
     model.cuda()
     features = features.cuda()
@@ -79,7 +83,6 @@ def train(epoch):
     output = model(features, adj)
     class_weights = Variable(torch.FloatTensor([0.005, 1]).cuda())
     loss_train = F.nll_loss(output[idx_train], labels[idx_train], weight=class_weights)
-    # loss_train = F.cross_entropy(output[idx_train], labels[idx_train])
     acc_train = accuracy(output[idx_train], labels[idx_train])
     loss_train.backward()
     optimizer.step()
@@ -95,8 +98,9 @@ def train(epoch):
     
     precision_train, recall_train, F1_train, _ = evaluate(output[idx_train], labels[idx_train])
     precision_val, recall_val, F1_val, _ = evaluate(output[idx_val], labels[idx_val])
-    with open("predictions/evaluation_train_val.txt", "a") as f:
-        f.write('%s %f %f %f %f %f %f %f %f\n' % (train_dataset, precision_train, recall_train, acc_train, loss_train, precision_val, recall_val, acc_val, loss_val))
+#     with open(out_filename, "a") as f:
+#         f.write('%s %f %f %f %f %f %f %f %f\n' % (train_dataset, precision_train, recall_train, acc_train, loss_train, precision_val, recall_val, acc_val, loss_val))
+
 #     print('Epoch: {:04d}'.format(epoch+1),
 #          'loss_train: {:.4f}'.format(loss_train.data[0]),
 #          'acc_train: {:.4f}'.format(acc_train.data[0]),
@@ -114,8 +118,8 @@ def test():
           "loss= {:.4f}".format(loss_test.data[0]),
           "accuracy= {:.4f}".format(acc_test.data[0]))
     precision, recall, F1, acc = evaluate(output[idx_test], labels[idx_test])
-#     with open("predictions/test_evaluation.txt", "a") as f:
-#         f.write('%s %f %f %f %f\n' % (train_dataset, precision, recall, F1, acc))
+    with open(out_filename, "a") as f:
+        f.write('%s %f %f %f %f\n' % (train_dataset, precision, recall, F1, acc))
 
 def predict():
     model.eval()
@@ -128,9 +132,8 @@ def predict():
     output = model(features, adj)
     acc = accuracy(output, labels)
     precision, recall, F1, acc = evaluate(output, labels)
-    with open("predictions/evaluation.txt", "a") as f:
+    with open(out_filename, "a") as f:
         f.write('%s %s %f %f %f %f\n' % (train_dataset, test_dataset, precision, recall, F1, acc))
-#         f.write('%s %s %f\n' % (train_dataset, test_dataset, acc.data[0]))
 
 def evaluate(output, labels):
     preds = output.max(1)[1].type_as(labels)
@@ -138,18 +141,20 @@ def evaluate(output, labels):
     TN = ((preds == 0) & (labels == 0)).double().sum().data[0]
     FP = ((preds == 1) & (labels == 0)).double().sum().data[0]
     FN = ((preds == 0) & (labels == 1)).double().sum().data[0]
-    precision = TP / (TP + FP)
-    recall = TP / (TP + FN)
-    F1 = 2 * precision * recall / (precision + recall)
+    if TP == 0:
+        precision, recall, F1 = 0, 0, 0
+    else:
+        precision = TP / (TP + FP)
+        recall = TP / (TP + FN)
+        F1 = 2 * precision * recall / (precision + recall)
     acc = (TP + TN) / (TP + TN + FP + FN)
-#     print(TP, FN, FP, TN)
     return precision, recall, F1, acc
 
 # Train model
 t_total = time.time()
 for epoch in range(args.epochs):
     train(epoch)
-# print("Optimization Finished!")
+
 print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
 
 # Testing
